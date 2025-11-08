@@ -41,6 +41,14 @@ def calculate_recommended_price(unit_cost: Decimal, target_margin_rate: Decimal)
 
 @app.post("/api/price-simulations/calculate", response_model=PriceSimulationResponse)
 def calculate_price_simulation(payload: PriceSimulationRequest) -> PriceSimulationResponse:
+    """
+    価格シミュレーションAPIエンドポイント
+
+    要件定義書v2.0に基づいた価格計算を実行します。
+    - 推奨価格 = 原価 / (1 - 目標粗利率)
+    - 粗利益 = 推奨価格 - 原価
+    - すべての計算で四捨五入（ROUND_HALF_UP）を適用
+    """
     try:
         unit_cost = payload.unit_cost_per_kg
         target_margin_rate = payload.target_margin_rate
@@ -48,16 +56,24 @@ def calculate_price_simulation(payload: PriceSimulationRequest) -> PriceSimulati
     except ValueError as exc:
         raise HTTPException(
             status_code=400,
-            detail={"error": {"code": "INVALID_INPUT", "message": str(exc)}},
+            detail={"error": {"code": "VALIDATION_ERROR", "message": str(exc)}},
         ) from exc
 
+    # 推奨価格と粗利益の計算（円/kg単位で四捨五入）
     recommended_price = round_jpy(recommended_price_decimal)
     rounded_price_decimal = Decimal(recommended_price)
     gross_profit_decimal = rounded_price_decimal - unit_cost
     gross_profit = round_jpy(gross_profit_decimal)
 
+    # 粗利率の計算（小数第4位まで）
     margin_rate = round_rate(gross_profit_decimal / rounded_price_decimal)
 
+    # 総粗利益の計算（数量が指定されている場合）
+    gross_profit_total = None
+    if payload.quantity_kg is not None and payload.quantity_kg > Decimal("0"):
+        gross_profit_total = round_jpy(gross_profit_decimal * payload.quantity_kg)
+
+    # 5つの価格パターンを生成（10%, 15%, 20%, 25%, 30%）
     price_patterns = []
     for preset_margin in MARGIN_PRESETS:
         price_decimal = calculate_recommended_price(unit_cost, preset_margin)
@@ -71,6 +87,7 @@ def calculate_price_simulation(payload: PriceSimulationRequest) -> PriceSimulati
             )
         )
 
+    # 最低売価ガード（5%マージンを最低ラインとする）
     minimum_price_decimal = calculate_recommended_price(unit_cost, DEFAULT_MIN_MARGIN_RATE)
     minimum_price = round_jpy(minimum_price_decimal)
     is_below_min = recommended_price < minimum_price
@@ -89,6 +106,7 @@ def calculate_price_simulation(payload: PriceSimulationRequest) -> PriceSimulati
     return PriceSimulationResponse(
         recommended_price_per_kg=recommended_price,
         gross_profit_per_kg=gross_profit,
+        gross_profit_total=gross_profit_total,
         margin_rate=margin_rate,
         price_patterns=price_patterns,
         guard=guard,
