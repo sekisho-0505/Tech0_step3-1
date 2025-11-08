@@ -50,6 +50,9 @@ export const PriceSimulationResult = () => {
           <Chip label={`推奨価格: ${result.recommended_price_per_kg.toLocaleString()}円/kg`} color="primary" size="medium" sx={{ fontSize: '1.2rem', py: 2 }} />
           <Chip label={`粗利益: ${result.gross_profit_per_kg.toLocaleString()}円/kg`} />
           <Chip label={`粗利率: ${(result.margin_rate * 100).toFixed(1)}%`} />
+          {result.gross_profit_total !== undefined && result.gross_profit_total !== null && (
+            <Chip label={`総粗利益: ${result.gross_profit_total.toLocaleString()}円`} color="secondary" />
+          )}
         </Box>
 
         <Typography variant="subtitle1" gutterBottom>
