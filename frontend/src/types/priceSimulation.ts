@@ -20,6 +20,7 @@ export interface GuardInfo {
 export interface PriceSimulationResponse {
   recommended_price_per_kg: number;
   gross_profit_per_kg: number;
+  gross_profit_total?: number;
   margin_rate: number;
   price_patterns: PricePattern[];
   guard: GuardInfo;
