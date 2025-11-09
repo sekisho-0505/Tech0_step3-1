@@ -1,9 +1,8 @@
-version: '3.9'
 services:
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - '8000:8000'
     volumes:
@@ -15,14 +14,17 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - '3000:3000'
     environment:
       - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-    volumes:
-      - ./frontend:/app
+      - NODE_ENV=development
+    # Windows/WSL2 での bind mount は遅いため、ビルド高速化のため一旦コメントアウト
+    # 開発時にホットリロードが必要な場合のみ有効化してください
+    # volumes:
+    #   - ./frontend:/app
     depends_on:
       - backend
 
