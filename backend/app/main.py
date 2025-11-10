@@ -6,6 +6,9 @@ from typing import Any, Dict
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api.endpoints import break_even, data_import, price_simulations, products
+from .core.config import settings
+from .core.database import Base, engine
 from .schemas import (
     BreakEvenResponse,
     GuardInfo,
@@ -23,15 +26,21 @@ from .schemas import (
 
 getcontext().prec = 28
 
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Price Simulation API", version="1.0.0")
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+)
 
 # 現状は 5% の粗利率を最低売価としてガード
 DEFAULT_MIN_MARGIN_RATE = Decimal("0.05")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -116,6 +125,31 @@ def calculate_price_simulation(payload: PriceSimulationRequest) -> PriceSimulati
         price_patterns=price_patterns,
         guard=guard,
     )
+
+
+# Include API routers
+app.include_router(price_simulations.router, prefix=f"{settings.API_V1_STR}/price-simulations", tags=["price-simulations"])
+app.include_router(break_even.router, prefix=f"{settings.API_V1_STR}/break-even", tags=["break-even"])
+app.include_router(products.router, prefix=f"{settings.API_V1_STR}/products", tags=["products"])
+app.include_router(data_import.router, prefix=f"{settings.API_V1_STR}/data-import", tags=["data-import"])
+
+
+@app.get("/")
+def root() -> Dict[str, Any]:
+    """APIルートエンドポイント - APIの情報を返す"""
+    return {
+        "name": settings.PROJECT_NAME,
+        "version": settings.VERSION,
+        "status": "running",
+        "docs": "/docs",
+        "health": "/health",
+        "endpoints": {
+            "price_simulations": f"{settings.API_V1_STR}/price-simulations",
+            "break_even": f"{settings.API_V1_STR}/break-even",
+            "products": f"{settings.API_V1_STR}/products",
+            "data_import": f"{settings.API_V1_STR}/data-import",
+        }
+    }
 
 
 @app.get("/health")
