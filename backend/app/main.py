@@ -7,11 +7,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .schemas import (
+    BreakEvenResponse,
     GuardInfo,
+    ImportResponse,
+    ImportError,
+    ImportWarning,
     MARGIN_PRESETS,
     PricePattern,
     PriceSimulationRequest,
     PriceSimulationResponse,
+    TrendData,
     round_jpy,
     round_rate,
 )
@@ -116,3 +121,97 @@ def calculate_price_simulation(payload: PriceSimulationRequest) -> PriceSimulati
 @app.get("/health")
 def health_check() -> Dict[str, Any]:
     return {"status": "ok"}
+
+
+@app.get("/api/break-even/current", response_model=BreakEvenResponse)
+def get_break_even_current(year_month: str | None = None) -> BreakEvenResponse:
+    """
+    損益分岐点情報取得APIエンドポイント
+
+    現在の月の損益分岐点情報を返します。
+    モックデータを返す実装です（後でデータベース連携を追加予定）。
+    """
+    from datetime import datetime
+
+    # 年月が指定されていない場合は現在の年月を使用
+    if year_month is None:
+        year_month = datetime.now().strftime("%Y-%m")
+
+    # モックデータ（要件定義書のサンプルデータを使用）
+    fixed_costs = 4018000
+    current_revenue = 25000000
+    variable_cost_rate = Decimal("0.754")
+    gross_margin_rate = Decimal("0.246")
+
+    # 損益分岐点計算: 固定費 / 粗利率
+    break_even_revenue = round_jpy(Decimal(fixed_costs) / gross_margin_rate)
+
+    # 達成率計算: 現在売上 / 損益分岐点
+    achievement_rate = round_rate(Decimal(current_revenue) / Decimal(break_even_revenue))
+
+    # 差額計算
+    delta_revenue = current_revenue - break_even_revenue
+
+    # ステータス判定
+    if achievement_rate >= Decimal("1.2"):
+        status = "safe"
+    elif achievement_rate >= Decimal("1.0"):
+        status = "warning"
+    else:
+        status = "danger"
+
+    # トレンドデータ（過去3ヶ月分のモックデータ）
+    trend = [
+        TrendData(month="2025-06", revenue=23207000, break_even=15069106),
+        TrendData(month="2025-07", revenue=28722000, break_even=34235772),
+        TrendData(month="2025-08", revenue=25000000, break_even=16341463),
+    ]
+
+    return BreakEvenResponse(
+        year_month=year_month,
+        fixed_costs=fixed_costs,
+        current_revenue=current_revenue,
+        variable_cost_rate=variable_cost_rate,
+        gross_margin_rate=gross_margin_rate,
+        break_even_revenue=break_even_revenue,
+        achievement_rate=achievement_rate,
+        delta_revenue=delta_revenue,
+        status=status,
+        trend=trend,
+    )
+
+
+@app.post("/api/import/excel", response_model=ImportResponse)
+async def import_excel() -> ImportResponse:
+    """
+    ExcelインポートAPIエンドポイント
+
+    Excelファイルからデータをインポートします。
+    モック実装（後でファイルアップロード処理を追加予定）。
+    """
+    # モックレスポンス（要件定義書のサンプルデータを使用）
+    return ImportResponse(
+        success=True,
+        imported=8,
+        skipped=2,
+        errors=[
+            ImportError(
+                row=3,
+                column="C",
+                value="abc",
+                reason="数値でない値が入力されています",
+            ),
+            ImportError(
+                row=7,
+                column="D",
+                value=-100,
+                reason="負の値は許可されていません",
+            ),
+        ],
+        warnings=[
+            ImportWarning(
+                row=5,
+                message="利益率が5%未満です",
+            ),
+        ],
+    )

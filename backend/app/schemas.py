@@ -84,3 +84,49 @@ class PriceSimulationResponse(BaseModel):
     def _round_margin_rate(cls, value: Decimal) -> Decimal:
         """粗利率を小数第4位で四捨五入"""
         return round_rate(value)
+
+
+# 損益分岐点関連のスキーマ
+class TrendData(BaseModel):
+    """月次トレンドデータ"""
+    month: str = Field(..., description="月（YYYY-MM形式）")
+    revenue: int = Field(..., description="売上高（円）")
+    break_even: int = Field(..., description="損益分岐点（円）")
+
+
+class BreakEvenResponse(BaseModel):
+    """損益分岐点分析レスポンス"""
+    year_month: str = Field(..., description="対象年月（YYYY-MM形式）")
+    fixed_costs: int = Field(..., description="固定費（円）")
+    current_revenue: int = Field(..., description="現在の売上高（円）")
+    variable_cost_rate: Decimal = Field(..., description="変動費率")
+    gross_margin_rate: Decimal = Field(..., description="粗利率")
+    break_even_revenue: int = Field(..., description="損益分岐点売上高（円）")
+    achievement_rate: Decimal = Field(..., description="達成率")
+    delta_revenue: int = Field(..., description="損益分岐点との差額（円）")
+    status: str = Field(..., description="状態（safe/warning/danger）")
+    trend: List[TrendData] = Field(..., description="月次トレンド")
+
+
+# インポート関連のスキーマ
+class ImportError(BaseModel):
+    """インポートエラー情報"""
+    row: int = Field(..., description="行番号")
+    column: str = Field(..., description="列名")
+    value: Any = Field(..., description="エラー値")
+    reason: str = Field(..., description="エラー理由")
+
+
+class ImportWarning(BaseModel):
+    """インポート警告情報"""
+    row: int = Field(..., description="行番号")
+    message: str = Field(..., description="警告メッセージ")
+
+
+class ImportResponse(BaseModel):
+    """インポート結果レスポンス"""
+    success: bool = Field(..., description="成功フラグ")
+    imported: int = Field(..., description="インポート成功件数")
+    skipped: int = Field(..., description="スキップ件数")
+    errors: List[ImportError] = Field(default_factory=list, description="エラー一覧")
+    warnings: List[ImportWarning] = Field(default_factory=list, description="警告一覧")
