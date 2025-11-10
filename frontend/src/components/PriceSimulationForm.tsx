@@ -21,11 +21,11 @@ import {
 import { useSimulationStore } from '@/stores/simulationStore';
 
 const productOptions = [
-  '和牛肩ロース',
-  '米粉パン（1kg）',
-  '有機じゃがいも',
-  '瀬戸内レモン',
-  '北海道バター',
+  '商品A',
+  '商品B',
+  '商品C',
+  '商品D',
+  '商品E',
 ];
 
 const marginMarks = [
@@ -36,7 +36,7 @@ const marginMarks = [
 ];
 
 export const PriceSimulationForm = () => {
-  const { setLoading, setResult, setError, loading, error } = useSimulationStore();
+  const { setInput, setLoading, setResult, setError, loading, error } = useSimulationStore();
 
   const {
     control,
@@ -58,6 +58,14 @@ export const PriceSimulationForm = () => {
       setLoading(true);
       setError(undefined);
       try {
+        // 入力値を保存
+        setInput({
+          productName: values.productName,
+          unitCostPerKg: values.unitCostPerKg,
+          targetMarginRate: values.targetMarginRate / 100,
+          quantityKg: values.quantityKg ?? undefined,
+        });
+
         const response = await fetchPriceSimulation({
           productName: values.productName,
           unitCostPerKg: values.unitCostPerKg,
@@ -76,7 +84,7 @@ export const PriceSimulationForm = () => {
         setLoading(false);
       }
     },
-    [setError, setLoading, setResult],
+    [setInput, setError, setLoading, setResult],
   );
 
   const handleCloseError = useCallback(() => setError(undefined), [setError]);
@@ -123,6 +131,7 @@ export const PriceSimulationForm = () => {
                 errors.unitCostPerKg?.message ?? '千円単位ではなく円単位で入力してください'
               }
               onChange={(event) => field.onChange(Number(event.target.value))}
+              onFocus={(event) => event.target.select()}
             />
           )}
         />
@@ -135,9 +144,19 @@ export const PriceSimulationForm = () => {
               <Typography gutterBottom>目標粗利率（%）</Typography>
               <TextField
                 fullWidth
-                value={`${field.value}%`}
-                inputProps={{ readOnly: true }}
+                type="number"
+                value={field.value}
+                inputProps={{ min: 0, max: 90, step: 1 }}
                 sx={{ mb: 1 }}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  if (value >= 0 && value <= 90) {
+                    field.onChange(value);
+                  }
+                }}
+                onFocus={(event) => event.target.select()}
+                error={Boolean(errors.targetMarginRate)}
+                helperText={errors.targetMarginRate?.message ?? '0〜90の範囲で入力できます'}
               />
               <Slider
                 value={field.value}
@@ -147,12 +166,8 @@ export const PriceSimulationForm = () => {
                 marks={marginMarks}
                 onChange={(_, value) => field.onChange(value as number)}
                 valueLabelDisplay="auto"
+                valueLabelFormat={(value) => `${value}%`}
               />
-              {errors.targetMarginRate && (
-                <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-                  {errors.targetMarginRate.message}
-                </Typography>
-              )}
             </Box>
           )}
         />
@@ -172,6 +187,7 @@ export const PriceSimulationForm = () => {
                 const value = event.target.value;
                 field.onChange(value === '' ? undefined : Number(value));
               }}
+              onFocus={(event) => event.target.select()}
             />
           )}
         />

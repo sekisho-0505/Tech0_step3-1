@@ -84,3 +84,64 @@ class PriceSimulationResponse(BaseModel):
     def _round_margin_rate(cls, value: Decimal) -> Decimal:
         """粗利率を小数第4位で四捨五入"""
         return round_rate(value)
+
+
+# 価格シミュレーション保存用スキーマ
+class PriceSimulationSaveRequest(BaseModel):
+    """価格シミュレーション保存リクエスト"""
+
+    product_name: str = Field(..., min_length=1, max_length=200)
+    input_cost_per_kg: Decimal = Field(..., gt=0)
+    target_margin_rate: Decimal = Field(..., ge=0, lt=1)
+    calculated_price_per_kg: Decimal = Field(..., gt=0)
+    selected_price_per_kg: Optional[Decimal] = Field(None, gt=0)
+    quantity_kg: Optional[Decimal] = Field(None, ge=0)
+    gross_profit_total: Optional[int] = None
+    notes: Optional[str] = None
+
+
+class PriceSimulationSaveResponse(BaseModel):
+    """価格シミュレーション保存レスポンス"""
+
+    id: str
+    message: str
+
+
+# 商品関連スキーマ
+class ProductListResponse(BaseModel):
+    """商品リストレスポンス"""
+
+    id: str
+    product_code: str
+    product_name: str
+    unit_cost_per_kg: Optional[Decimal]
+    unit_price_per_kg: Optional[Decimal]
+
+
+# シミュレーション履歴スキーマ
+class SimulationHistoryResponse(BaseModel):
+    """シミュレーション履歴レスポンス"""
+
+    id: str
+    product_name: str
+    simulation_at: str
+    input_cost_per_kg: Decimal
+    target_margin_rate: Decimal
+    calculated_price_per_kg: Decimal
+    selected_price_per_kg: Optional[Decimal]
+    status: str
+
+
+# 損益分岐点分析スキーマ
+class BreakEvenResponse(BaseModel):
+    """損益分岐点分析レスポンス"""
+
+    year_month: str
+    fixed_costs: int
+    current_revenue: int
+    variable_cost_rate: Decimal
+    gross_margin_rate: Decimal
+    break_even_revenue: int
+    achievement_rate: Decimal
+    delta_revenue: int
+    status: str

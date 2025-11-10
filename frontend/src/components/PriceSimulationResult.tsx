@@ -1,11 +1,14 @@
 'use client';
 
+import { useCallback, useState } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Snackbar from '@mui/material/Snackbar';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -14,11 +17,43 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 
 import { useSimulationStore } from '@/stores/simulationStore';
+import { saveSimulation } from '@/services/priceSimulationService';
 
 const formatCurrency = (value: number) => `${value.toLocaleString()}円/kg`;
 
 export const PriceSimulationResult = () => {
-  const { result } = useSimulationStore();
+  const { input, result } = useSimulationStore();
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | undefined>();
+
+  const handleSave = useCallback(async () => {
+    if (!result || !input) return;
+
+    try {
+      setSaving(true);
+      setSaveError(undefined);
+
+      await saveSimulation({
+        productName: input.productName,
+        inputCostPerKg: input.unitCostPerKg,
+        targetMarginRate: input.targetMarginRate,
+        calculatedPricePerKg: result.recommended_price_per_kg,
+        selectedPricePerKg: result.recommended_price_per_kg,
+        quantityKg: input.quantityKg,
+        grossProfitTotal: result.gross_profit_total ?? undefined,
+      });
+
+      setSaveSuccess(true);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : '保存に失敗しました');
+    } finally {
+      setSaving(false);
+    }
+  }, [input, result]);
+
+  const handleCloseSuccess = useCallback(() => setSaveSuccess(false), []);
+  const handleCloseError = useCallback(() => setSaveError(undefined), []);
 
   if (!result) {
     return (
@@ -83,15 +118,42 @@ export const PriceSimulationResult = () => {
         <Button
           variant="contained"
           color={result.guard.is_below_min ? 'error' : 'primary'}
-          disabled={result.guard.is_below_min}
+          disabled={result.guard.is_below_min || saving}
           fullWidth
           sx={{ mt: 3 }}
+          onClick={handleSave}
         >
-          {result.guard.is_below_min
-            ? '最低売価を下回るため保存できません'
-            : 'この条件で保存'}
+          {saving ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : result.guard.is_below_min ? (
+            '最低売価を下回るため保存できません'
+          ) : (
+            'この条件で保存'
+          )}
         </Button>
       </CardContent>
+
+      <Snackbar
+        open={saveSuccess}
+        autoHideDuration={3000}
+        onClose={handleCloseSuccess}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: '100%' }}>
+          シミュレーション結果を保存しました
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={Boolean(saveError)}
+        autoHideDuration={4000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+          {saveError}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 };
