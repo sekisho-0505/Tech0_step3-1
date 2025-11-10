@@ -1,6 +1,8 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import type { Route } from 'next';
+import type { ReactNode } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -17,7 +19,7 @@ export const Navigation = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const navItems = [
+  const navItems: { label: string; path: Route; icon: ReactNode }[] = [
     { label: 'ダッシュボード', path: '/dashboard', icon: <DashboardIcon /> },
     { label: '価格シミュレーション', path: '/price-simulation', icon: <CalculateIcon /> },
     { label: '損益分岐点', path: '/break-even', icon: <TrendingUpIcon /> },
