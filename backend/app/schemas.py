@@ -86,62 +86,47 @@ class PriceSimulationResponse(BaseModel):
         return round_rate(value)
 
 
-# 価格シミュレーション保存用スキーマ
-class PriceSimulationSaveRequest(BaseModel):
-    """価格シミュレーション保存リクエスト"""
-
-    product_name: str = Field(..., min_length=1, max_length=200)
-    input_cost_per_kg: Decimal = Field(..., gt=0)
-    target_margin_rate: Decimal = Field(..., ge=0, lt=1)
-    calculated_price_per_kg: Decimal = Field(..., gt=0)
-    selected_price_per_kg: Optional[Decimal] = Field(None, gt=0)
-    quantity_kg: Optional[Decimal] = Field(None, ge=0)
-    gross_profit_total: Optional[int] = None
-    notes: Optional[str] = None
+# 損益分岐点関連のスキーマ
+class TrendData(BaseModel):
+    """月次トレンドデータ"""
+    month: str = Field(..., description="月（YYYY-MM形式）")
+    revenue: int = Field(..., description="売上高（円）")
+    break_even: int = Field(..., description="損益分岐点（円）")
 
 
-class PriceSimulationSaveResponse(BaseModel):
-    """価格シミュレーション保存レスポンス"""
-
-    id: str
-    message: str
-
-
-# 商品関連スキーマ
-class ProductListResponse(BaseModel):
-    """商品リストレスポンス"""
-
-    id: str
-    product_code: str
-    product_name: str
-    unit_cost_per_kg: Optional[Decimal]
-    unit_price_per_kg: Optional[Decimal]
-
-
-# シミュレーション履歴スキーマ
-class SimulationHistoryResponse(BaseModel):
-    """シミュレーション履歴レスポンス"""
-
-    id: str
-    product_name: str
-    simulation_at: str
-    input_cost_per_kg: Decimal
-    target_margin_rate: Decimal
-    calculated_price_per_kg: Decimal
-    selected_price_per_kg: Optional[Decimal]
-    status: str
-
-
-# 損益分岐点分析スキーマ
 class BreakEvenResponse(BaseModel):
     """損益分岐点分析レスポンス"""
+    year_month: str = Field(..., description="対象年月（YYYY-MM形式）")
+    fixed_costs: int = Field(..., description="固定費（円）")
+    current_revenue: int = Field(..., description="現在の売上高（円）")
+    variable_cost_rate: Decimal = Field(..., description="変動費率")
+    gross_margin_rate: Decimal = Field(..., description="粗利率")
+    break_even_revenue: int = Field(..., description="損益分岐点売上高（円）")
+    achievement_rate: Decimal = Field(..., description="達成率")
+    delta_revenue: int = Field(..., description="損益分岐点との差額（円）")
+    status: str = Field(..., description="状態（safe/warning/danger）")
+    trend: List[TrendData] = Field(..., description="月次トレンド")
 
-    year_month: str
-    fixed_costs: int
-    current_revenue: int
-    variable_cost_rate: Decimal
-    gross_margin_rate: Decimal
-    break_even_revenue: int
-    achievement_rate: Decimal
-    delta_revenue: int
-    status: str
+
+# インポート関連のスキーマ
+class ImportError(BaseModel):
+    """インポートエラー情報"""
+    row: int = Field(..., description="行番号")
+    column: str = Field(..., description="列名")
+    value: Any = Field(..., description="エラー値")
+    reason: str = Field(..., description="エラー理由")
+
+
+class ImportWarning(BaseModel):
+    """インポート警告情報"""
+    row: int = Field(..., description="行番号")
+    message: str = Field(..., description="警告メッセージ")
+
+
+class ImportResponse(BaseModel):
+    """インポート結果レスポンス"""
+    success: bool = Field(..., description="成功フラグ")
+    imported: int = Field(..., description="インポート成功件数")
+    skipped: int = Field(..., description="スキップ件数")
+    errors: List[ImportError] = Field(default_factory=list, description="エラー一覧")
+    warnings: List[ImportWarning] = Field(default_factory=list, description="警告一覧")
