@@ -1,9 +1,32 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Grid from '@mui/material/Unstable_Grid2';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import WarningIcon from '@mui/icons-material/Warning';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+
 import { importExcel } from '@/services/importService';
 import type { ImportResponse } from '@/types/import';
-import Link from 'next/link';
 
 export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -34,9 +57,7 @@ export default function ImportPage() {
       setResult(importResult);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : 'インポートに失敗しました',
+        err instanceof Error ? err.message : 'インポートに失敗しました',
       );
       setResult(null);
     } finally {
@@ -45,254 +66,180 @@ export default function ImportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            データインポート
-          </h1>
-        </div>
-      </header>
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      {/* ヘッダー */}
+      <Typography variant="h4" component="h1" gutterBottom>
+        データインポート
+      </Typography>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* ナビゲーション */}
-        <nav className="mb-8 flex gap-4">
-          <Link
-            href="/"
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-100 border border-gray-300"
-          >
-            価格シミュレーション
-          </Link>
-          <Link
-            href="/dashboard"
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-100 border border-gray-300"
-          >
-            ダッシュボード
-          </Link>
-          <Link
-            href="/import"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg"
-          >
-            インポート
-          </Link>
-        </nav>
+      {/* ナビゲーション */}
+      <Box sx={{ mb: 4, display: 'flex', gap: 2 }}>
+        <Button component={Link} href="/" variant="outlined">
+          価格シミュレーション
+        </Button>
+        <Button component={Link} href="/dashboard" variant="outlined">
+          ダッシュボード
+        </Button>
+        <Button component={Link} href="/import" variant="contained">
+          インポート
+        </Button>
+      </Box>
 
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
+      {/* ファイルアップロード */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
             Excelファイルアップロード
-          </h2>
+          </Typography>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-6">
-              <label
-                htmlFor="file-upload"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+          <Box component="form" onSubmit={handleSubmit}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
                 ファイル選択
-              </label>
-              <input
-                id="file-upload"
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-md file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-blue-50 file:text-blue-700
-                  hover:file:bg-blue-100
-                  cursor-pointer"
-              />
-              <p className="mt-2 text-sm text-gray-500">
+              </Typography>
+              <Button variant="outlined" component="label" fullWidth>
+                ファイルを選択
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileChange}
+                  hidden
+                />
+              </Button>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                 対応形式: .xlsx, .xls (最大10MB)
-              </p>
-            </div>
+              </Typography>
+            </Box>
 
             {file && (
-              <div className="mb-6 p-4 bg-gray-50 rounded-md">
-                <p className="text-sm text-gray-700">
-                  選択されたファイル:{' '}
-                  <span className="font-medium">{file.name}</span>
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <AlertTitle>選択されたファイル</AlertTitle>
+                <Typography variant="body2">
+                  ファイル名: <strong>{file.name}</strong>
+                </Typography>
+                <Typography variant="body2">
                   サイズ: {(file.size / 1024).toFixed(2)} KB
-                </p>
-              </div>
+                </Typography>
+              </Alert>
             )}
 
-            <button
+            <Button
               type="submit"
+              variant="contained"
               disabled={!file || loading}
-              className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              fullWidth
+              size="large"
             >
               {loading ? 'インポート中...' : 'インポート開始'}
-            </button>
-          </form>
-        </div>
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
-        {/* エラー表示 */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-            <div className="flex items-start">
-              <svg
-                className="w-5 h-5 text-red-600 mt-0.5 mr-3"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <div>
-                <h3 className="text-sm font-medium text-red-800">エラー</h3>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* エラー表示 */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 4 }}>
+          <AlertTitle>エラー</AlertTitle>
+          {error}
+        </Alert>
+      )}
 
-        {/* 結果表示 */}
-        {result && (
-          <div className="space-y-6">
-            {/* サマリー */}
-            <div
-              className={`rounded-lg p-6 ${
-                result.success
-                  ? 'bg-green-50 border border-green-200'
-                  : 'bg-yellow-50 border border-yellow-200'
-              }`}
-            >
-              <div className="flex items-start">
-                <svg
-                  className={`w-6 h-6 mt-0.5 mr-3 ${
-                    result.success ? 'text-green-600' : 'text-yellow-600'
-                  }`}
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <div className="flex-1">
-                  <h3
-                    className={`text-lg font-medium ${
-                      result.success ? 'text-green-900' : 'text-yellow-900'
-                    }`}
-                  >
-                    インポート
-                    {result.success ? '完了' : '完了（一部エラー）'}
-                  </h3>
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">成功</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {result.imported}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">スキップ</p>
-                      <p className="text-2xl font-bold text-gray-600">
-                        {result.skipped}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">エラー</p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {result.errors.length}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* 結果表示 */}
+      {result && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* サマリー */}
+          <Alert
+            severity={result.success ? 'success' : 'warning'}
+            icon={<CheckCircleIcon />}
+          >
+            <AlertTitle>
+              インポート{result.success ? '完了' : '完了（一部エラー）'}
+            </AlertTitle>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid xs={4}>
+                <Typography variant="body2" color="text.secondary">
+                  成功
+                </Typography>
+                <Typography variant="h5" color="success.main">
+                  {result.imported}
+                </Typography>
+              </Grid>
+              <Grid xs={4}>
+                <Typography variant="body2" color="text.secondary">
+                  スキップ
+                </Typography>
+                <Typography variant="h5" color="text.secondary">
+                  {result.skipped}
+                </Typography>
+              </Grid>
+              <Grid xs={4}>
+                <Typography variant="body2" color="text.secondary">
+                  エラー
+                </Typography>
+                <Typography variant="h5" color="error.main">
+                  {result.errors.length}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Alert>
 
-            {/* エラー詳細 */}
-            {result.errors.length > 0 && (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    エラー詳細
-                  </h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          行
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          列
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          値
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          理由
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+          {/* エラー詳細 */}
+          {result.errors.length > 0 && (
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  エラー詳細
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>行</TableCell>
+                        <TableCell>列</TableCell>
+                        <TableCell>値</TableCell>
+                        <TableCell>理由</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {result.errors.map((err, idx) => (
-                        <tr key={idx}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {err.row}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {err.column}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {String(err.value)}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {err.reason}
-                          </td>
-                        </tr>
+                        <TableRow key={idx}>
+                          <TableCell>{err.row}</TableCell>
+                          <TableCell>{err.column}</TableCell>
+                          <TableCell>{String(err.value)}</TableCell>
+                          <TableCell>{err.reason}</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          )}
 
-            {/* 警告 */}
-            {result.warnings.length > 0 && (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900">警告</h3>
-                </div>
-                <div className="px-6 py-4">
-                  <ul className="space-y-2">
-                    {result.warnings.map((warning, idx) => (
-                      <li key={idx} className="flex items-start">
-                        <svg
-                          className="w-5 h-5 text-yellow-500 mt-0.5 mr-2"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span className="text-sm text-gray-700">
-                          行 {warning.row}: {warning.message}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </main>
-    </div>
+          {/* 警告 */}
+          {result.warnings.length > 0 && (
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  警告
+                </Typography>
+                <List>
+                  {result.warnings.map((warning, idx) => (
+                    <ListItem key={idx}>
+                      <ListItemIcon>
+                        <WarningIcon color="warning" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={`行 ${warning.row}: ${warning.message}`}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </CardContent>
+            </Card>
+          )}
+        </Box>
+      )}
+    </Container>
   );
 }

@@ -1,9 +1,30 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import LinearProgress from '@mui/material/LinearProgress';
+import Grid from '@mui/material/Unstable_Grid2';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import Chip from '@mui/material/Chip';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import CalculateIcon from '@mui/icons-material/Calculate';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+
 import { fetchBreakEvenCurrent } from '@/services/breakEvenService';
 import type { BreakEvenResponse } from '@/types/breakEven';
-import Link from 'next/link';
 
 export default function DashboardPage() {
   const [data, setData] = useState<BreakEvenResponse | null>(null);
@@ -31,17 +52,24 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">読み込み中...</div>
-      </div>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-red-600">エラー: {error}</div>
-      </div>
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
     );
   }
 
@@ -50,9 +78,9 @@ export default function DashboardPage() {
   }
 
   const statusColors = {
-    safe: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    danger: 'bg-red-100 text-red-800',
+    safe: 'success' as const,
+    warning: 'warning' as const,
+    danger: 'error' as const,
   };
 
   const statusText = {
@@ -62,223 +90,229 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">ダッシュボード</h1>
-        </div>
-      </header>
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      {/* ヘッダー */}
+      <Typography variant="h4" component="h1" gutterBottom>
+        ダッシュボード
+      </Typography>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* ナビゲーション */}
-        <nav className="mb-8 flex gap-4">
-          <Link
-            href="/"
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-100 border border-gray-300"
-          >
-            価格シミュレーション
-          </Link>
-          <Link
-            href="/dashboard"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg"
-          >
-            ダッシュボード
-          </Link>
-          <Link
-            href="/import"
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-100 border border-gray-300"
-          >
-            インポート
-          </Link>
-        </nav>
+      {/* ナビゲーション */}
+      <Box sx={{ mb: 4, display: 'flex', gap: 2 }}>
+        <Button component={Link} href="/" variant="outlined">
+          価格シミュレーション
+        </Button>
+        <Button component={Link} href="/dashboard" variant="contained">
+          ダッシュボード
+        </Button>
+        <Button component={Link} href="/import" variant="outlined">
+          インポート
+        </Button>
+      </Box>
 
-        {/* KPIカード */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* 今月の売上 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">
-              今月の売上
-            </h3>
-            <p className="text-3xl font-bold text-gray-900">
-              {(data.currentRevenue / 1000).toLocaleString()}
-              <span className="text-base font-normal text-gray-500 ml-2">
-                千円
-              </span>
-            </p>
-          </div>
+      {/* KPIカード */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* 今月の売上 */}
+        <Grid xs={12} md={6} lg={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                今月の売上
+              </Typography>
+              <Typography variant="h4" component="div">
+                {(data.currentRevenue / 1000).toLocaleString()}
+                <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+                  千円
+                </Typography>
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
 
-          {/* 損益分岐点 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">
-              損益分岐点
-            </h3>
-            <p className="text-3xl font-bold text-gray-900">
-              {(data.breakEvenRevenue / 1000).toLocaleString()}
-              <span className="text-base font-normal text-gray-500 ml-2">
-                千円
-              </span>
-            </p>
-            <div className="mt-3">
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full ${
-                    data.status === 'safe'
-                      ? 'bg-green-500'
-                      : data.status === 'warning'
-                        ? 'bg-yellow-500'
-                        : 'bg-red-500'
-                  }`}
-                  style={{
-                    width: `${Math.min(data.achievementRate * 100, 100)}%`,
-                  }}
-                ></div>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">
-                達成率: {(data.achievementRate * 100).toFixed(1)}%
-              </p>
-            </div>
-          </div>
+        {/* 損益分岐点 */}
+        <Grid xs={12} md={6} lg={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                損益分岐点
+              </Typography>
+              <Typography variant="h4" component="div">
+                {(data.breakEvenRevenue / 1000).toLocaleString()}
+                <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+                  千円
+                </Typography>
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.min(data.achievementRate * 100, 100)}
+                  color={statusColors[data.status]}
+                  sx={{ height: 8, borderRadius: 1 }}
+                />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  達成率: {(data.achievementRate * 100).toFixed(1)}%
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-          {/* 粗利率 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">粗利率</h3>
-            <p className="text-3xl font-bold text-gray-900">
-              {(data.grossMarginRate * 100).toFixed(1)}
-              <span className="text-base font-normal text-gray-500 ml-2">
-                %
-              </span>
-            </p>
-            <div
-              className={`mt-3 inline-block px-3 py-1 rounded-full text-sm font-medium ${statusColors[data.status]}`}
-            >
-              {statusText[data.status]}
-            </div>
-          </div>
+        {/* 粗利率 */}
+        <Grid xs={12} md={6} lg={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                粗利率
+              </Typography>
+              <Typography variant="h4" component="div">
+                {(data.grossMarginRate * 100).toFixed(1)}
+                <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+                  %
+                </Typography>
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <Chip
+                  label={statusText[data.status]}
+                  color={statusColors[data.status]}
+                  size="small"
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-          {/* 変動費率 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">
-              変動費率
-            </h3>
-            <p className="text-3xl font-bold text-gray-900">
-              {(data.variableCostRate * 100).toFixed(1)}
-              <span className="text-base font-normal text-gray-500 ml-2">
-                %
-              </span>
-            </p>
-          </div>
-        </div>
+        {/* 変動費率 */}
+        <Grid xs={12} md={6} lg={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                変動費率
+              </Typography>
+              <Typography variant="h4" component="div">
+                {(data.variableCostRate * 100).toFixed(1)}
+                <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+                  %
+                </Typography>
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-        {/* トレンドグラフ（簡易版） */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
+      {/* トレンドテーブル */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
             月次トレンド
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    月
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    売上高
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    損益分岐点
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    達成状況
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+          </Typography>
+          <TableContainer component={Paper} variant="outlined">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>月</TableCell>
+                  <TableCell align="right">売上高</TableCell>
+                  <TableCell align="right">損益分岐点</TableCell>
+                  <TableCell align="right">達成状況</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {data.trend.map((item) => {
                   const achievement = (item.revenue / item.breakEven) * 100;
                   const isAchieved = achievement >= 100;
                   return (
-                    <tr key={item.month}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <TableRow key={item.month}>
+                      <TableCell component="th" scope="row">
                         {item.month}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      </TableCell>
+                      <TableCell align="right">
                         {(item.revenue / 1000).toLocaleString()} 千円
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      </TableCell>
+                      <TableCell align="right">
                         {(item.breakEven / 1000).toLocaleString()} 千円
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            isAchieved
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {achievement.toFixed(1)}%
-                        </span>
-                      </td>
-                    </tr>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Chip
+                          label={`${achievement.toFixed(1)}%`}
+                          color={isAchieved ? 'success' : 'error'}
+                          size="small"
+                        />
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
 
-        {/* クイックアクション */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Link
+      {/* クイックアクション */}
+      <Grid container spacing={3}>
+        <Grid xs={12} md={6}>
+          <Card
+            component={Link}
             href="/"
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow p-6 flex items-center justify-between transition-colors"
+            sx={{
+              textDecoration: 'none',
+              transition: 'transform 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: 3,
+              },
+            }}
           >
-            <div>
-              <h3 className="text-lg font-medium">価格シミュレーション</h3>
-              <p className="text-sm text-blue-100 mt-1">
-                新しい価格を計算する
-              </p>
-            </div>
-            <svg
-              className="w-8 h-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <CardContent
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-              />
-            </svg>
-          </Link>
+              <Box>
+                <Typography variant="h6">価格シミュレーション</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                  新しい価格を計算する
+                </Typography>
+              </Box>
+              <CalculateIcon sx={{ fontSize: 48 }} />
+            </CardContent>
+          </Card>
+        </Grid>
 
-          <Link
+        <Grid xs={12} md={6}>
+          <Card
+            component={Link}
             href="/import"
-            className="bg-green-600 hover:bg-green-700 text-white rounded-lg shadow p-6 flex items-center justify-between transition-colors"
+            sx={{
+              textDecoration: 'none',
+              transition: 'transform 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: 3,
+              },
+            }}
           >
-            <div>
-              <h3 className="text-lg font-medium">Excelインポート</h3>
-              <p className="text-sm text-green-100 mt-1">
-                データをアップロードする
-              </p>
-            </div>
-            <svg
-              className="w-8 h-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <CardContent
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                bgcolor: 'success.main',
+                color: 'success.contrastText',
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
-            </svg>
-          </Link>
-        </div>
-      </main>
-    </div>
+              <Box>
+                <Typography variant="h6">Excelインポート</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                  データをアップロードする
+                </Typography>
+              </Box>
+              <UploadFileIcon sx={{ fontSize: 48 }} />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
   );
 }
